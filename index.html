@@ -17,15 +17,6 @@
             container {
                 width: calc(100vw); 
             }
-            section {
-                display: inline;
-            }
-            aside {
-                display: inline;
-            }
-            section > * {
-                text-align: center;
-            }
             * {
                 font-size: 1.2em;
             }
@@ -52,9 +43,10 @@
                 <textarea id="priorityCoverageWindowIDs" style="width:512px;height:256px" onChange="hideOutput(); obtainPriorityIDs()" onClick="hideOutput();"></textarea>
                 <hr>
                 Desired outline width for priority coverage windows:
-                <input type="number" id="outlineWidth" onChange="changeOutlineWidth()" style="width: 2em" value="10" min="1">
+                <input type="number" id="outlineWidth" onChange="changeOutlineWidth()" style="width: 2em" value="5" min="1" max="10">
                 <hr>
                 <button onclick="outputText()">Generate Output KML</button><br>
+                <h3>Refreshed <span id="refreshes">0</span> time(s).</h3>
                 <textarea id="outputKML" style="width:512px;height:256px" class="d-none" readonly></textarea>
                 <hr>
             </form>
@@ -227,6 +219,7 @@
             }
             document.getElementById("outputKML").value = outputText;
             document.getElementById("outputKML").classList.remove("d-none");
+            document.getElementById("refreshes").textContent=Number(document.getElementById("refreshes").textContent)+1;
         }
         </script>
 
