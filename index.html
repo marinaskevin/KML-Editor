@@ -10,7 +10,7 @@
                 text-align: center;
             }
             body {
-                background: linear-gradient(#99f,#f99);
+                background: linear-gradient(#99f,#9f9);
                 background-attachment: fixed;
                 height: calc(100vh);
             }
@@ -26,6 +26,12 @@
             section > * {
                 text-align: center;
             }
+            * {
+                font-size: 1.2em;
+            }
+            textarea {
+                font-size: 0.5em;
+            }
         </style>
     </head>
     <body>
@@ -35,17 +41,26 @@
         </div>
         <div class="container">
             <form onSubmit="return false;">
+                <small>(change the KMZ file extension to ZIP and extract the KML)</small><br>
                 Select a KML File to Load:
                 <input type="file" id="fileToLoad">
                 <hr>
-                <button onclick="loadFileAsText()">Load Selected File</button><br>
-                <textarea id="inputTextToSave" style="width:512px;height:256px" onChange="obtainFileLines()"></textarea>
+                <button onclick="loadFileAsText()">Load Selected KML File</button><br>
+                <textarea id="inputText" style="width:512px;height:256px" onChange="obtainFileLines()" onClick="hideOutput();" readonly></textarea>
                 <hr>
-                Paste the list of ids for the priority coverage windows: <br>
-                <textarea id="priorityCoverageWindowIDs" style="width:512px;height:256px" onChange="obtainPriorityIDs()"></textarea>
+                Paste the list of nine-digit ids for the priority coverage windows:<br><small>(one id per line, no punctuation)</small><br>
+                <textarea id="priorityCoverageWindowIDs" style="width:512px;height:256px" onChange="hideOutput(); obtainPriorityIDs()" onClick="hideOutput();"></textarea>
                 <hr>
+                Desired outline width for priority coverage windows:
+                <input type="number" id="outlineWidth" onChange="changeOutlineWidth()" style="width: 2em" value="10" min="1">
+                <hr>
+                <button onclick="outputText()">Generate Output KML</button><br>
+                <textarea id="outputKML" style="width:512px;height:256px" class="d-none" readonly></textarea>
+                <hr>
+            </form>
+            <form>
                 Filename to Save As:
-                <input id="inputFileNameToSaveAs"></input>
+                <input id="outputFileNameToSaveAs" placeholder="example.kml" required></input>
                 <button onclick="saveTextAsFile()">Save Text to File</button>
             </form>
         </div>
@@ -57,13 +72,31 @@
         var priorityIDs = [];
         var IDRunner = ``;
         var isPriorityID = false;
+        var hasLineStyleTag = false;
+        var hadLineStyleTag = false;
+        var hasPolyStyleTag = false;
         var editLineStyleTag = false;
+        var outlineWidth = 5;
+        var lineStyleText = makeLineStyleText();
+
+        function changeOutlineWidth()
+        {
+            outlineWidth = Number(document.getElementById("outlineWidth").value);
+            lineStyleText = makeLineStyleText();
+            hideOutput();
+        }
+
+        function makeLineStyleText()
+        {
+            return `			<LineStyle>\n			    <color>ff00ffff</color>\n			    <width>`+outlineWidth+`</width>\n			</LineStyle>\n`;
+        }
 
         function saveTextAsFile()
         {
-            var textToWrite = document.getElementById("inputTextToSave").value;
+            var textToWrite = document.getElementById("outputKML").value;
             var textFileAsBlob = new Blob([textToWrite], {type:'text/plain'});
-            var fileNameToSaveAs = document.getElementById("inputFileNameToSaveAs").value;
+            var fileNameToSaveAs = document.getElementById("outputFileNameToSaveAs").value;
+            if(fileNameToSaveAs.length == 0) return;
 
             var downloadLink = document.createElement("a");
             downloadLink.download = fileNameToSaveAs;
@@ -92,14 +125,21 @@
             document.body.removeChild(event.target);
         }
 
+        function hideOutput()
+        {
+            document.getElementById("outputKML").classList.add("d-none");
+        }
+
         function obtainFileLines()
         {
-            fileLines = document.getElementById("inputTextToSave").value.split(`\n`);
+            fileLines = document.getElementById("inputText").value.split(`\n`);
+            outputText();
         }
 
         function obtainPriorityIDs()
         {
             priorityIDs = document.getElementById("priorityCoverageWindowIDs").value.split(`\n`);
+            outputText();
         }
 
         function loadFileAsText()
@@ -110,14 +150,16 @@
             fileReader.onload = function(fileLoadedEvent) 
             {
                 var textFromFileLoaded = fileLoadedEvent.target.result;
-                document.getElementById("inputTextToSave").value = textFromFileLoaded;
+                document.getElementById("inputText").value = textFromFileLoaded;
                 obtainFileLines();
             };
             fileReader.readAsText(fileToLoad, "UTF-8");
         }
 
-        function scanLines()
+        function outputText()
         {
+            outlineWidth = Number(document.getElementById("outlineWidth").value);
+            var outputText = ``;
             for(var i=0; i<fileLines.length; i++)
             {
                 var fileLine = fileLines[i];
@@ -134,8 +176,13 @@
                         console.log(e);
                     }
                 }
-                var hasLineStyleTag = fileLine.includes("<LineStyle>");
-                var hasPolyStyleTag = fileLine.includes("<PolyStyle>");
+                hasLineStyleTag = fileLine.includes("<LineStyle>");
+                hadLineStyleTag = hadLineStyleTag | hasLineStyleTag;
+                hasPolyStyleTag = fileLine.includes("<PolyStyle>");
+                if(fileLine.includes("</Style>"))
+                {
+                    hadLineStyleTag = false;
+                }
                 if(hasLineStyleTag & !hasPolyStyleTag)
                 {
                     editLineStyleTag = true;
@@ -146,12 +193,15 @@
                     fileLines[i].split('<')[0].concat("<PolyStyle>");
                     console.log("Removed misplaced LineStyle tag.");
                 }
-                if(hasPolyStyleTag & !hasLineStyleTag)
+                if(hasPolyStyleTag & priorityIDs.length > 0)
                 {
                     if(priorityIDs.includes(IDRunner))
                     {
                         console.log(IDRunner+" is priority.");
-                        fileLines[i] = lineStyleText.concat(fileLines[i]);
+                        if(!hadLineStyleTag)
+                        {
+                            outputText += lineStyleText;
+                        }
                     }
                     else
                     {
@@ -162,15 +212,22 @@
                 {
                     editLineStyleTag = false;
                 }
-                if(editLineStyleTag & fileLine.includes("color"))
+                if(priorityIDs.includes(IDRunner) & editLineStyleTag & fileLine.includes("<color>"))
                 {
-                    console.log("Color value is "+fileLine.split("<color>")[1].split("</color>")[0]+".");
+                    outputText += `			    <color>ff00ffff</color>\n`;
+                }
+                else if(priorityIDs.includes(IDRunner) & editLineStyleTag & fileLine.includes("<width>"))
+                {
+                    outputText += `			    <width>`+outlineWidth+`</width>\n`;
+                }
+                else
+                {
+                    outputText += fileLines[i] + '\n';
                 }
             }
+            document.getElementById("outputKML").value = outputText;
+            document.getElementById("outputKML").classList.remove("d-none");
         }
-
-        var lineStyleText = `			<LineStyle>\n			    <color>ff00ffff</color>\n			    <width>10</width>\n			</LineStyle>`;
-
         </script>
 
     </body>
