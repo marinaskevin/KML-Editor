@@ -70,6 +70,7 @@
         var editLineStyleTag = false;
         var outlineWidth = 5;
         var lineStyleText = makeLineStyleText();
+        var defaultDescription = `.`;
 
         function changeOutlineWidth()
         {
@@ -182,7 +183,7 @@
                 }
                 if(hasLineStyleTag & hasPolyStyleTag)
                 {
-                    fileLines[i].split('<')[0].concat("<PolyStyle>");
+                    fileLine = fileLines[i] = fileLine.split('<')[0].concat("<PolyStyle>");
                     console.log("Removed misplaced LineStyle tag.");
                 }
                 if(hasPolyStyleTag & priorityIDs.length > 0)
@@ -206,15 +207,20 @@
                 }
                 if(priorityIDs.includes(IDRunner) & editLineStyleTag & fileLine.includes("<color>"))
                 {
-                    outputText += `			    <color>ff00ffff</color>\n`;
+                    fileLine = `			    <color>ff00ffff</color>`;
                 }
                 else if(priorityIDs.includes(IDRunner) & editLineStyleTag & fileLine.includes("<width>"))
                 {
-                    outputText += `			    <width>`+outlineWidth+`</width>\n`;
+                    fileLine = `			    <width>`+outlineWidth+`</width>`;
                 }
-                else
+                outputText += fileLine + '\n';
+                if(fileLine.includes("<name>") & i > 0 & i < fileLines.length - 1)
                 {
-                    outputText += fileLines[i] + '\n';
+                    if(!fileLines[i+1].includes("<description>") & fileLines[i-1].includes("<Placemark>"))
+                    {
+                        outputText += `			<description>`+defaultDescription+`</description>\n`;
+                        console.log(`Default description \``+defaultDescription+`\` was added.`);
+                    }
                 }
             }
             document.getElementById("outputKML").value = outputText;
