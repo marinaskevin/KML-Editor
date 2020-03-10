@@ -3,7 +3,7 @@
 <html>
     <head>
         <meta charset="UTF-8">
-        <title>KML Editor</title>
+        <title>KMZ Editor</title>
         <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
         <style>
             div {
@@ -14,11 +14,15 @@
                 background-attachment: fixed;
                 height: calc(100vh);
             }
-            container {
+            .container {
                 width: calc(100vw); 
+                padding-bottom: 2em;
+            }
+            .jumbotron > h1 {
+                font-weight: bold;
             }
             * {
-                font-size: 1.2em;
+                font-size: 1.1em;
             }
             textarea {
                 font-size: 0.5em;
@@ -28,32 +32,35 @@
     <body>
 
         <div class="jumbotron">
-            <h1>KML Editor for highlighting priority coverage windows</h1>
+            <h1>KMZ Editor for highlighting<br>priority coverage windows</h1>
         </div>
         <div class="container">
             <form onSubmit="return false;">
-                <small>(change the KMZ file extension to ZIP and extract the KML)</small><br>
-                Select a KML File to Load:
+                <p>Change the <b>.kmz</b> file extension to <b>.zip</b> and extract the <b>doc.kml</b> file.</p><br>
+                Select the <b>.kml</b> file to Load:
                 <input type="file" id="fileToLoad">
                 <hr>
-                <button onclick="loadFileAsText()">Load Selected KML File</button><br>
+                <button onclick="loadFileAsText()">Load the selected <b>.kml</b> File</button><br>
                 <textarea id="inputText" style="width:512px;height:256px" onChange="obtainFileLines()" onClick="hideOutput();" readonly></textarea>
                 <hr>
-                Paste the list of nine-digit ids for the priority coverage windows:<br><small>(one id per line, no punctuation)</small><br>
+                Paste the list of <b>9-digit ids</b> for the priority coverage windows:<br><b>One id per line and No punctuation or extra spaces</b><br>
                 <textarea id="priorityCoverageWindowIDs" style="width:512px;height:256px" onChange="hideOutput(); obtainPriorityIDs()" onClick="hideOutput();"></textarea>
                 <hr>
                 Desired outline width for priority coverage windows:
                 <input type="number" id="outlineWidth" onChange="changeOutlineWidth()" style="width: 2em" value="5" min="1" max="10">
                 <hr>
-                <button onclick="outputText()">Generate Output KML</button><br>
+                <button onclick="outputText()">Generate Output <b>.kml</b></button><br>
                 <h3>Refreshed <span id="refreshes">0</span> time(s).</h3>
-                <textarea id="outputKML" style="width:512px;height:256px" class="d-none" readonly></textarea>
+                <textarea id="outputKML" style="width:512px;height:256px" class="d-none" readonly></textarea><br>
+                <small>Ensure the .kml output is displayed immediately above this line. If not, click "Generate Output <b>.kml</b>".</small>
                 <hr>
             </form>
             <form>
-                Filename to Save As:
-                <input id="outputFileNameToSaveAs" placeholder="example.kml" required></input>
-                <button onclick="saveTextAsFile()">Save Text to File</button>
+                Filename to Save As (make sure to add the .kml extension):
+                <input id="outputFileNameToSaveAs" placeholder="example.kml" required></input><br>
+                <button onclick="saveTextAsFile()">Save <b>.kml</b> as </button>
+                <hr>
+                <small>After saving the output as a <b>.kml</b> file, open the <b>.kml</b> file in Google Earth, right click on the place folder, select "Save Place As...", and make sure you save it as a <b>.kmz</b> file type.</small>
             </form>
         </div>
 
