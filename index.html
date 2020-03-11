@@ -3,7 +3,7 @@
 <html>
     <head>
         <meta charset="UTF-8">
-        <title>KMZ Editor</title>
+        <title>KML Editor</title>
         <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
         <style>
             div {
@@ -32,11 +32,11 @@
     <body>
 
         <div class="jumbotron">
-            <h1>KMZ Editor for highlighting<br>priority coverage windows</h1>
+            <h1>KML Editor for highlighting<br>priority coverage windows</h1>
         </div>
         <div class="container">
             <form onSubmit="return false;">
-                <p>Change the <b>.kmz</b> file extension to <b>.zip</b> and extract the <b>doc.kml</b> file.</p><br>
+                <p>If working with a <b>.kmz</b> file, change the <b>.kmz</b> file extension to <b>.zip</b> and extract the <b>doc.kml</b> file.</p><br>
                 Select the <b>.kml</b> file to Load:
                 <input type="file" id="fileToLoad">
                 <hr>
@@ -59,8 +59,6 @@
                 Filename to Save As (make sure to add the .kml extension):
                 <input id="outputFileNameToSaveAs" placeholder="example.kml" required></input><br>
                 <button onclick="saveTextAsFile()">Save <b>.kml</b> as </button>
-                <hr>
-                <small>After saving the output as a <b>.kml</b> file, open the <b>.kml</b> file in Google Earth, right click on the place folder, select "Save Place As...", and make sure you save it as a <b>.kmz</b> file type.</small>
             </form>
         </div>
 
