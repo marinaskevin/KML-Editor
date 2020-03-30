@@ -69,6 +69,8 @@
         var priorityIDs = [];
         var IDRunner = ``;
         var isPriorityID = false;
+        var hasStyleMapTag = false;
+        var insideStyleMapTag = false;
         var hasLineStyleTag = false;
         var hadLineStyleTag = false;
         var hasPolyStyleTag = false;
@@ -76,6 +78,7 @@
         var outlineWidth = 5;
         var lineStyleText = makeLineStyleText();
         var defaultDescription = `.`;
+        var styleMapTagContent = ``;
 
         function changeOutlineWidth()
         {
@@ -86,7 +89,7 @@
 
         function makeLineStyleText()
         {
-            return `			<LineStyle>\n			    <color>ff00ffff</color>\n			    <width>`+outlineWidth+`</width>\n			</LineStyle>\n`;
+            return `			<LineStyle>\n				<color>ff00ffff</color>\n				<width>`+outlineWidth+`</width>\n			</LineStyle>\n`;
         }
 
         function saveTextAsFile()
@@ -163,7 +166,7 @@
                 var fileLine = fileLines[i];
                 if(fileLine.includes(".kml</name>"))
                 {
-                    lineStyleTagPresent = false;
+                    styleMapTagContent = ``;
                     try
                     {
                         IDRunner = fileLine.split('<name>')[1].substr(3,9);
@@ -174,6 +177,8 @@
                         console.log(e);
                     }
                 }
+                hasStyleMapTag = fileLine.includes("<StyleMap");
+                insideStyleMapTag = insideStyleMapTag | hasStyleMapTag;
                 hasLineStyleTag = fileLine.includes("<LineStyle>");
                 hadLineStyleTag = hadLineStyleTag | hasLineStyleTag;
                 hasPolyStyleTag = fileLine.includes("<PolyStyle>");
@@ -212,19 +217,46 @@
                 }
                 if(priorityIDs.includes(IDRunner) & editLineStyleTag & fileLine.includes("<color>"))
                 {
-                    fileLine = `			    <color>ff00ffff</color>`;
+                    fileLine = `				<color>ff00ffff</color>`;
+//                    fileLine = `				<color>fe`+IDRunner.substr(7,2)+IDRunner.substr(5,2)+IDRunner.substr(3,2)+`</color>`;
                 }
                 else if(priorityIDs.includes(IDRunner) & editLineStyleTag & fileLine.includes("<width>"))
                 {
-                    fileLine = `			    <width>`+outlineWidth+`</width>`;
+                    fileLine = `				<width>`+outlineWidth+`</width>`;
                 }
-                outputText += fileLine + '\n';
-                if(fileLine.includes("<name>") & i > 0 & i < fileLines.length - 1)
+                else if(!priorityIDs.includes(IDRunner) & editLineStyleTag & fileLine.includes("<color>"))
                 {
-                    if(!fileLines[i+1].includes("<description>") & fileLines[i-1].includes("<Placemark>"))
+                    fileLine = `				<color>ffffffff</color>`;
+                }
+                else if(!priorityIDs.includes(IDRunner) & editLineStyleTag & fileLine.includes("<width>"))
+                {
+                    fileLine = `				<width>1</width>`;
+                }
+                if(!insideStyleMapTag)
+                {
+                    outputText += fileLine + '\n';
+                }
+                else
+                {
+                    styleMapTagContent += fileLine + '\n';
+                }
+                if(fileLine.includes("</StyleMap>"))
+                {
+                    insideStyleMapTag = false;
+                }
+                if(i > 0 & i < fileLines.length - 1)
+                {
+                    if(fileLines[i+1].includes("<Placemark>") & styleMapTagContent.length > 0)
                     {
-                        outputText += `			<description>`+defaultDescription+`</description>\n`;
-                        console.log(`Default description \``+defaultDescription+`\` was added.`);
+                        outputText += styleMapTagContent;
+                    }
+                    if(fileLine.includes("<name>"))
+                    {
+                        if(!fileLines[i+1].includes("<description>") & fileLines[i-1].includes("<Placemark>"))
+                        {
+                            outputText += `         <description>`+defaultDescription+`</description>\n`;
+                            console.log(`Default description \``+defaultDescription+`\` was added.`);
+                        }
                     }
                 }
             }
